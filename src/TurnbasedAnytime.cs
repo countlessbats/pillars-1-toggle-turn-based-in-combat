@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace LoomTurnBasedToggle
+namespace LoomTurnbasedAnytime
 {
     // Sidecar entry point. Assembly-CSharp is patched to call Bootstrap.Tick() at the top of
     // GameState.Update(); on first tick we spawn a persistent MonoBehaviour that does the work.
@@ -20,13 +20,13 @@ namespace LoomTurnBasedToggle
 
             try
             {
-                GameObject go = new GameObject("LoomTurnBasedToggle");
+                GameObject go = new GameObject("LoomTurnbasedAnytime");
                 UnityEngine.Object.DontDestroyOnLoad(go);
                 go.AddComponent<Toggler>();
             }
             catch (Exception ex)
             {
-                Debug.LogError("[LoomTurnBasedToggle] spawn failed: " + ex);
+                Debug.LogError("[LoomTurnbasedAnytime] spawn failed: " + ex);
             }
             finally
             {
@@ -94,7 +94,7 @@ namespace LoomTurnBasedToggle
             }
             catch (Exception ex)
             {
-                Debug.LogError("[LoomTurnBasedToggle] RevertForcedDefault failed: " + ex);
+                Debug.LogError("[LoomTurnbasedAnytime] RevertForcedDefault failed: " + ex);
             }
         }
 
@@ -117,7 +117,7 @@ namespace LoomTurnBasedToggle
             }
             catch (Exception ex)
             {
-                Debug.LogError("[LoomTurnBasedToggle] update failed: " + ex);
+                Debug.LogError("[LoomTurnbasedAnytime] update failed: " + ex);
             }
         }
 
@@ -250,7 +250,7 @@ namespace LoomTurnBasedToggle
                     {
                         m_loggedButton = true;
                         StringBuilder sb = new StringBuilder();
-                        sb.Append("[LoomTurnBasedToggle] tactical button = ").Append(PathOf(m_button.transform));
+                        sb.Append("[LoomTurnbasedAnytime] tactical button = ").Append(PathOf(m_button.transform));
                         sb.Append(" | hiders(").Append(m_hiders.Count).Append("):");
                         foreach (UIVisibleInCombat v in m_hiders)
                         {
@@ -264,7 +264,7 @@ namespace LoomTurnBasedToggle
             }
             catch (Exception ex)
             {
-                Debug.LogError("[LoomTurnBasedToggle] FindButton failed: " + ex);
+                Debug.LogError("[LoomTurnbasedAnytime] FindButton failed: " + ex);
             }
         }
 

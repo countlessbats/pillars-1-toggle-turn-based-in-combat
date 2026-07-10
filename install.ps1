@@ -1,19 +1,19 @@
 <#
 .SYNOPSIS
-    Installs (or uninstalls) Tactical Toggle for Pillars of Eternity 1. No compilation required.
+    Installs (or uninstalls) Turnbased Anytime for Pillars of Eternity 1. No compilation required.
 
 .DESCRIPTION
-    Tactical Toggle lets you switch between real-time-with-pause and turn-based ("Tactical")
+    Turnbased Anytime lets you switch between real-time-with-pause and turn-based ("Tactical")
     combat at runtime from a keybind - including mid-combat, both directions.
 
     Install:
-      1. copies the sidecar (LoomTurnBasedToggle.dll) into the game's Managed folder,
+      1. copies the sidecar (LoomTurnbasedAnytime.dll) into the game's Managed folder,
       2. backs up Assembly-CSharp.dll (once), and
-      3. injects one call to LoomTurnBasedToggle.Bootstrap.Tick() at the top of
+      3. injects one call to LoomTurnbasedAnytime.Bootstrap.Tick() at the top of
          GameState.Update() with the bundled Mono.Cecil.dll.
 
     Needs only Windows PowerShell (5.1+, built into Windows) - no .NET SDK, no C# compiler. Run it
-    from the extracted release folder (the one that also contains LoomTurnBasedToggle.dll and
+    from the extracted release folder (the one that also contains LoomTurnbasedAnytime.dll and
     Mono.Cecil.dll). Close the game first.
 
 .PARAMETER GameDir
@@ -21,8 +21,8 @@
     if omitted; you are prompted if it can't be found.
 
 .PARAMETER Uninstall
-    Cleanly remove Tactical Toggle: surgically strips only its hook call + assembly reference (so
-    other mods that hook the same method are left intact) and deletes LoomTurnBasedToggle.dll.
+    Cleanly remove Turnbased Anytime: surgically strips only its hook call + assembly reference (so
+    other mods that hook the same method are left intact) and deletes LoomTurnbasedAnytime.dll.
 
 .EXAMPLE
     ./install.ps1
@@ -153,8 +153,8 @@ $rp.ReadWrite = $false; $rp.InMemory = $true; $rp.AssemblyResolver = $resolver
 if ($Uninstall) {
     $module = [Mono.Cecil.ModuleDefinition]::ReadModule($asmPath, $rp)
     try {
-        if (-not ($module.AssemblyReferences | Where-Object { $_.Name -eq 'LoomTurnBasedToggle' })) {
-            Write-Host "Tactical Toggle is not installed (no hook present). Nothing to do." -ForegroundColor Yellow
+        if (-not ($module.AssemblyReferences | Where-Object { $_.Name -eq 'LoomTurnbasedAnytime' })) {
+            Write-Host "Turnbased Anytime is not installed (no hook present). Nothing to do." -ForegroundColor Yellow
             return
         }
         $gs = $module.Types | Where-Object { $_.Name -eq 'GameState' } | Select-Object -First 1
@@ -164,40 +164,41 @@ if ($Uninstall) {
         foreach ($ins in $update.Body.Instructions) {
             if ($ins.OpCode.Code -eq [Mono.Cecil.Cil.Code]::Call -and $ins.Operand -is [Mono.Cecil.MethodReference]) {
                 $mr = [Mono.Cecil.MethodReference]$ins.Operand
-                if ($mr.DeclaringType -and $mr.DeclaringType.FullName -eq 'LoomTurnBasedToggle.Bootstrap' -and $mr.Name -eq 'Tick') { $remove += $ins }
+                if ($mr.DeclaringType -and $mr.DeclaringType.FullName -eq 'LoomTurnbasedAnytime.Bootstrap' -and $mr.Name -eq 'Tick') { $remove += $ins }
             }
         }
         foreach ($ins in $remove) { $il.Remove($ins) }
         # Remove ALL matching references (a re-patched assembly can carry more than one).
-        foreach ($ref in @($module.AssemblyReferences | Where-Object { $_.Name -eq 'LoomTurnBasedToggle' })) {
-            [void]$module.AssemblyReferences.Remove($ref)
+        # Loop by index + RemoveAt: Mono.Cecil Collection.Remove($item) silently no-ops under PowerShell.
+        for ($i = $module.AssemblyReferences.Count - 1; $i -ge 0; $i--) {
+            if ($module.AssemblyReferences[$i].Name -eq 'LoomTurnbasedAnytime') { $module.AssemblyReferences.RemoveAt($i) }
         }
-        $tmp = "$asmPath.tacticaltoggle-tmp"; if (Test-Path $tmp) { Remove-Item -LiteralPath $tmp -Force }
+        $tmp = "$asmPath.tbanytime-tmp"; if (Test-Path $tmp) { Remove-Item -LiteralPath $tmp -Force }
         $module.Write($tmp); $module.Dispose()
         Copy-Item -LiteralPath $tmp -Destination $asmPath -Force; Remove-Item -LiteralPath $tmp -Force
-        Remove-Item -LiteralPath (Join-Path $managed 'LoomTurnBasedToggle.dll') -Force -ErrorAction SilentlyContinue
-        Write-Host "`nTactical Toggle uninstalled (hook removed, other mods untouched)." -ForegroundColor Cyan
+        Remove-Item -LiteralPath (Join-Path $managed 'LoomTurnbasedAnytime.dll') -Force -ErrorAction SilentlyContinue
+        Write-Host "`nTurnbased Anytime uninstalled (hook removed, other mods untouched)." -ForegroundColor Cyan
     } finally { if ($module) { $module.Dispose() } }
     return
 }
 
 # ---- INSTALL ----
-$sidecarSrc = Join-Path $here 'LoomTurnBasedToggle.dll'
+$sidecarSrc = Join-Path $here 'LoomTurnbasedAnytime.dll'
 foreach ($p in @($asmPath, $sidecarSrc)) { if (-not (Test-Path $p)) { throw "Required file not found: $p" } }
 
 # 1. sidecar
-Copy-Item -LiteralPath $sidecarSrc -Destination (Join-Path $managed 'LoomTurnBasedToggle.dll') -Force
-Write-Host "Installed LoomTurnBasedToggle.dll" -ForegroundColor Green
+Copy-Item -LiteralPath $sidecarSrc -Destination (Join-Path $managed 'LoomTurnbasedAnytime.dll') -Force
+Write-Host "Installed LoomTurnbasedAnytime.dll" -ForegroundColor Green
 
 # 2. backup once
-$backup = "$asmPath.tacticaltoggle-backup"
+$backup = "$asmPath.tbanytime-backup"
 if (-not (Test-Path $backup)) { Copy-Item -LiteralPath $asmPath -Destination $backup -Force; Write-Host "Backed up Assembly-CSharp.dll -> $backup" -ForegroundColor Green }
 else { Write-Host "Backup already exists: $backup" -ForegroundColor DarkGray }
 
 # 3. inject hook
 $module = [Mono.Cecil.ModuleDefinition]::ReadModule($asmPath, $rp)
 try {
-    if ($module.AssemblyReferences | Where-Object { $_.Name -eq 'LoomTurnBasedToggle' }) {
+    if ($module.AssemblyReferences | Where-Object { $_.Name -eq 'LoomTurnbasedAnytime' }) {
         Write-Host "Already patched (hook present). DLL refreshed; nothing else to do." -ForegroundColor Yellow
         return
     }
@@ -206,21 +207,21 @@ try {
     $update = $gameState.Methods | Where-Object { $_.Name -eq 'Update' -and -not $_.IsStatic -and -not $_.HasParameters -and $_.HasBody } | Select-Object -First 1
     if (-not $update) { throw "Could not find GameState.Update()." }
     $sidecar   = [Mono.Cecil.AssemblyDefinition]::ReadAssembly($sidecarSrc)
-    $bootstrap = $sidecar.MainModule.Types | Where-Object { $_.FullName -eq 'LoomTurnBasedToggle.Bootstrap' } | Select-Object -First 1
+    $bootstrap = $sidecar.MainModule.Types | Where-Object { $_.FullName -eq 'LoomTurnbasedAnytime.Bootstrap' } | Select-Object -First 1
     if (-not $bootstrap) { throw "Bootstrap type not found in sidecar." }
     $tick = $bootstrap.Methods | Where-Object { $_.Name -eq 'Tick' -and $_.IsStatic -and -not $_.HasParameters } | Select-Object -First 1
     if (-not $tick) { throw "Bootstrap.Tick() not found in sidecar." }
     $importedTick = $module.ImportReference($tick)
     $il = $update.Body.GetILProcessor()
     $il.InsertBefore($update.Body.Instructions[0], $il.Create([Mono.Cecil.Cil.OpCodes]::Call, $importedTick))
-    $module.AssemblyReferences.Add((New-Object Mono.Cecil.AssemblyNameReference('LoomTurnBasedToggle', $sidecar.Name.Version)))
-    $tmp = "$asmPath.tacticaltoggle-patched"; if (Test-Path $tmp) { Remove-Item -LiteralPath $tmp -Force }
+    $module.AssemblyReferences.Add((New-Object Mono.Cecil.AssemblyNameReference('LoomTurnbasedAnytime', $sidecar.Name.Version)))
+    $tmp = "$asmPath.tbanytime-patched"; if (Test-Path $tmp) { Remove-Item -LiteralPath $tmp -Force }
     $module.Write($tmp); $module.Dispose()
     Copy-Item -LiteralPath $tmp -Destination $asmPath -Force; Remove-Item -LiteralPath $tmp -Force
-    Write-Host "Patched GameState.Update -> LoomTurnBasedToggle.Bootstrap.Tick()." -ForegroundColor Green
+    Write-Host "Patched GameState.Update -> LoomTurnbasedAnytime.Bootstrap.Tick()." -ForegroundColor Green
 } finally { if ($module) { $module.Dispose() } }
 
-Write-Host "`nTactical Toggle installed. Launch the game and press T (in or out of combat) to switch" -ForegroundColor Cyan
+Write-Host "`nTurnbased Anytime installed. Launch the game and press T (in or out of combat) to switch" -ForegroundColor Cyan
 Write-Host "between real-time and turn-based. Rebind it in Options -> Controls (camera/turn group," -ForegroundColor Cyan
 Write-Host "near Pass Turn / Wait Turn) like any other control." -ForegroundColor Cyan
 Write-Host "To uninstall: run  install.ps1 -Uninstall  (or the uninstall.bat)." -ForegroundColor DarkGray

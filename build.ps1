@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    Builds the Turn-Based Toggle sidecar and installs it into the game's Managed folder.
+    Builds the Turnbased Anytime sidecar and installs it into the game's Managed folder.
 
 .DESCRIPTION
-    Compiles src/*.cs into LoomTurnBasedToggle.dll and copies it to
+    Compiles src/*.cs into LoomTurnbasedAnytime.dll and copies it to
     <GameDir>/PillarsOfEternity_Data/Managed/. After a first install, run patch-hook.ps1
     once to wire Bootstrap.Tick() into GameState.Update(). Game must be closed for the patch.
 
@@ -51,7 +51,7 @@ if (-not $src) {
     throw "No C# source files found in $srcDir."
 }
 
-$outDll = Join-Path $managed 'LoomTurnBasedToggle.dll'
+$outDll = Join-Path $managed 'LoomTurnbasedAnytime.dll'
 
 Write-Host "Compiler : $Csc"
 Write-Host "Output   : $outDll"
@@ -73,6 +73,6 @@ if ($LASTEXITCODE -ne 0) {
     throw "Compilation failed ($LASTEXITCODE)."
 }
 
-Write-Host "`nBuilt LoomTurnBasedToggle.dll." -ForegroundColor Green
+Write-Host "`nBuilt LoomTurnbasedAnytime.dll." -ForegroundColor Green
 Write-Host "First install? Run: ./patch-hook.ps1 -GameDir `"$GameDir`"  (game closed)" -ForegroundColor Yellow
 Write-Host "Then restart the game to load the new build." -ForegroundColor Yellow
